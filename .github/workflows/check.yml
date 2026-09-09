@@ -1,0 +1,28 @@
+name: Nix Flake Check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Enable unfree packages
+        run: |
+          mkdir -p ~/.config/nixpkgs
+          echo '{ allowUnfree = true; }' > ~/.config/nixpkgs/config.nix
+
+      - name: Check flake
+        run: nix flake check --impure
+
+      - name: Build tmog package
+        run: nix build .#tmog --impure --no-link
