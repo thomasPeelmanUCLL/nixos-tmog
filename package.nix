@@ -1,39 +1,38 @@
 { lib
-, stdenv
+, appimageTools
 , fetchurl
-, autoPatchelfHook
-, qt6
-, systemd
 }:
 
-stdenv.mkDerivation rec {
+let
   pname = "tmog";
-  version = "0.1.1"; # bump when tmog.org publishes a new build
+  version = "0.1.1"; # bump when tmog.org publishes a new beta
 
   src = fetchurl {
-    url = "https://tmog.org/downloads/TMOG-Task-Manager-Linux-x86_64.tar.gz?v=${version}-free";
-    # run `nix-prefetch-url <url>` (or nix store prefetch-file) to get the real hash
+    url = "https://tmog.org/downloads/TMOG-Task-Manager-Linux-x86_64.AppImage";
+    # run: nix-prefetch-url "<url>"
+    # then: nix hash convert --hash-algo sha256 --to sri <result>
     hash = "sha256-0000000000000000000000000000000000000000000=";
   };
 
-  nativeBuildInputs = [ autoPatchelfHook ];
+  appimageContents = appimageTools.extractType2 { inherit pname version src; };
+in
+appimageTools.wrapType2 {
+  inherit pname version src;
 
-  buildInputs = [
-    stdenv.cc.cc.lib   # provides libstdc++/libgcc_s, matches AUR's gcc-libs
+  extraPkgs = pkgs: with pkgs; [
     qt6.qtbase
     qt6.qtmultimedia
     qt6.qtsvg
-    systemd            # libudev, etc.
+    systemd
+    libxkbcommon
+    wayland
+    alsa-lib
   ];
 
-  # The tarball is likely a flat dir with the binary + Qt plugin folders.
-  # Adjust these paths once you've actually inspected `tar tzf` output.
-  installPhase = ''
-    runHook preInstall
-    mkdir -p $out/bin $out/share/tmog
-    cp -r . $out/share/tmog
-    ln -s $out/share/tmog/TMOG $out/bin/tmog
-    runHook postInstall
+  extraInstallCommands = ''
+    # Uncomment/adjust once you've checked appimageContents for a .desktop/icon:
+    # install -m 444 -D ${appimageContents}/tmog.desktop $out/share/applications/tmog.desktop
+    # install -m 444 -D ${appimageContents}/tmog.png $out/share/icons/hicolor/256x256/apps/tmog.png
   '';
 
   meta = with lib; {
@@ -42,6 +41,6 @@ stdenv.mkDerivation rec {
     license = licenses.unfree; # closed-source, EULA bundled with the download
     platforms = [ "x86_64-linux" ];
     sourceProvenance = with sourceTypes; [ binaryNativeCode ];
-    maintainers = [ ]; # add yourself here
+    maintainers = [ ];
   };
 }
