@@ -9,9 +9,7 @@ let
 
   src = fetchurl {
     url = "https://tmog.org/downloads/TMOG-Task-Manager-Linux-x86_64.AppImage";
-    # run: nix-prefetch-url "<url>"
-    # then: nix hash convert --hash-algo sha256 --to sri <result>
-    hash = "sha256-0000000000000000000000000000000000000000000=";
+    hash = "sha256-C68GRpfWdzKADWMVZEaX7BU7jlBqUXMwTIXzMLLb5tI=";
   };
 
   appimageContents = appimageTools.extractType2 { inherit pname version src; };
