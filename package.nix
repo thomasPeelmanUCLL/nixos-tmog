@@ -12,7 +12,7 @@ let
     hash = "sha256-C68GRpfWdzKADWMVZEaX7BU7jlBqUXMwTIXzMLLb5tI=";
   };
 
-  appimageContents = appimageTools.extractType2 { inherit pname version src; };
+  appimageContents = appimageTools.extract { inherit pname version src; };
 in
 appimageTools.wrapType2 {
   inherit pname version src;
@@ -25,12 +25,19 @@ appimageTools.wrapType2 {
     libxkbcommon
     wayland
     alsa-lib
+    libva
+    libvdpau
+    mesa
+    libglvnd
   ];
 
   extraInstallCommands = ''
-    # Uncomment/adjust once you've checked appimageContents for a .desktop/icon:
-    # install -m 444 -D ${appimageContents}/tmog.desktop $out/share/applications/tmog.desktop
-    # install -m 444 -D ${appimageContents}/tmog.png $out/share/icons/hicolor/256x256/apps/tmog.png
+    install -m 444 -D ${appimageContents}/com.tmog.taskmanager.desktop \
+      $out/share/applications/com.tmog.taskmanager.desktop
+    install -m 444 -D ${appimageContents}/tmog-task-manager.png \
+      $out/share/icons/hicolor/256x256/apps/tmog-task-manager.png
+    substituteInPlace $out/share/applications/com.tmog.taskmanager.desktop \
+      --replace-fail 'Exec=tmog-task-manager' "Exec=$out/bin/${pname}"
   '';
 
   meta = with lib; {
@@ -39,6 +46,7 @@ appimageTools.wrapType2 {
     license = licenses.unfree; # closed-source, EULA bundled with the download
     platforms = [ "x86_64-linux" ];
     sourceProvenance = with sourceTypes; [ binaryNativeCode ];
+    mainProgram = "tmog";
     maintainers = [ ];
   };
 }
